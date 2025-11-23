@@ -1,0 +1,768 @@
+  <!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fanta - Refreshing Drinks Store</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    .fanta-gradient {
+      background: linear-gradient(135deg, #FF6B00 0%, #FFB800 100%);
+    }
+
+    .bubble {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      animation: float 6s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(180deg); }
+    }
+
+    .product-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    .product-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+
+    .flavor-card {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .flavor-card:hover {
+      transform: scale(1.05) rotate(2deg);
+    }
+
+    .cart-badge {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    .mobile-menu {
+      transition: transform 0.3s ease;
+      transform: translateX(100%);
+    }
+
+    .mobile-menu.active {
+      transform: translateX(0);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .wave {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z' fill='%23ffffff'%3E%3C/path%3E%3C/svg%3E");
+      background-size: cover;
+    }
+
+    .sparkle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: white;
+      border-radius: 50%;
+      animation: sparkle 2s infinite;
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    .hover-float:hover {
+      animation: hoverFloat 1s ease-in-out infinite;
+    }
+
+    @keyframes hoverFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .rotating {
+      animation: rotate 20s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .cart-sidebar {
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .cart-sidebar.active {
+      transform: translateX(0);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body><!-- Navigation -->
+  <nav class="bg-white shadow-lg sticky top-0 z-50">
+   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-20">
+     <div class="flex items-center">
+      <div class="text-5xl mr-2">
+       🍊
+      </div>
+      <h1 id="store-name" class="text-3xl font-black" style="color: #FF6B00;">Fanta</h1>
+     </div><!-- Desktop Navigation -->
+     <div class="hidden md:flex items-center space-x-8"><a href="#home" class="text-gray-700 hover:text-orange-500 transition font-semibold">Home</a> <a href="#products" class="text-gray-700 hover:text-orange-500 transition font-semibold">Drinks</a> <a href="#flavors" class="text-gray-700 hover:text-orange-500 transition font-semibold">Flavors</a> <a href="#testimonials" class="text-gray-700 hover:text-orange-500 transition font-semibold">Reviews</a> <a href="#contact" class="text-gray-700 hover:text-orange-500 transition font-semibold">Contact</a>
+     </div>
+     <div class="flex items-center space-x-4"><!-- Cart Button --> <button id="cart-btn" class="relative p-3 hover:bg-orange-50 rounded-full transition">
+       <svg class="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+       </svg><span id="cart-count" class="cart-badge absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold">0</span> </button> <!-- Mobile Menu Button --> <button id="mobile-menu-btn" class="md:hidden p-3 hover:bg-orange-50 rounded-full transition">
+       <svg class="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+       </svg></button>
+     </div>
+    </div>
+   </div><!-- Mobile Menu -->
+   <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 w-64 h-full bg-white shadow-2xl z-50">
+    <div class="p-6"><button id="close-mobile-menu" class="mb-8 p-2 hover:bg-gray-100 rounded-full transition">
+      <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg></button>
+     <nav class="flex flex-col space-y-4"><a href="#home" class="mobile-link text-gray-700 hover:text-orange-500 transition px-4 py-2 font-semibold">Home</a> <a href="#products" class="mobile-link text-gray-700 hover:text-orange-500 transition px-4 py-2 font-semibold">Drinks</a> <a href="#flavors" class="mobile-link text-gray-700 hover:text-orange-500 transition px-4 py-2 font-semibold">Flavors</a> <a href="#testimonials" class="mobile-link text-gray-700 hover:text-orange-500 transition px-4 py-2 font-semibold">Reviews</a> <a href="#contact" class="mobile-link text-gray-700 hover:text-orange-500 transition px-4 py-2 font-semibold">Contact</a>
+     </nav>
+    </div>
+   </div>
+  </nav><!-- Hero Section -->
+  <section id="home" class="fanta-gradient text-white py-24 px-4 relative overflow-hidden"><!-- Animated Background Elements -->
+   <div class="bubble" style="width: 80px; height: 80px; top: 10%; left: 10%; animation-delay: 0s;"></div>
+   <div class="bubble" style="width: 60px; height: 60px; top: 60%; left: 80%; animation-delay: 2s;"></div>
+   <div class="bubble" style="width: 100px; height: 100px; top: 30%; left: 70%; animation-delay: 1s;"></div>
+   <div class="sparkle" style="top: 20%; left: 30%; animation-delay: 0.5s;"></div>
+   <div class="sparkle" style="top: 70%; left: 60%; animation-delay: 1.5s;"></div>
+   <div class="sparkle" style="top: 40%; left: 90%; animation-delay: 2.5s;"></div>
+   <div class="max-w-7xl mx-auto relative z-10">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+     <div>
+      <h2 id="hero-title" class="text-5xl md:text-7xl font-black mb-6 leading-tight">Taste The Feeling!</h2>
+      <p id="hero-subtitle" class="text-xl md:text-3xl mb-8 opacity-95 font-semibold">100% Natural Orange Flavor - Pure Refreshment</p><button id="cta-button" class="bg-white text-orange-500 px-10 py-5 rounded-full text-xl font-black hover:bg-orange-50 transition transform hover:scale-105 shadow-2xl">Order Now</button>
+     </div>
+     <div class="flex justify-center">
+      <div class="text-9xl rotating hover-float">
+       🥤
+      </div>
+     </div>
+    </div>
+   </div>
+   <div class="wave"></div>
+  </section><!-- Fun Facts Section -->
+  <section class="py-16 px-4 bg-white">
+   <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+     <div class="text-center">
+      <div class="text-5xl mb-3">
+       🌍
+      </div>
+      <div class="text-4xl font-black text-orange-500 mb-2">
+       190+
+      </div>
+      <p class="text-gray-600 font-semibold">Countries</p>
+     </div>
+     <div class="text-center">
+      <div class="text-5xl mb-3">
+       🍊
+      </div>
+      <div class="text-4xl font-black text-orange-500 mb-2">
+       20+
+      </div>
+      <p class="text-gray-600 font-semibold">Flavors</p>
+     </div>
+     <div class="text-center">
+      <div class="text-5xl mb-3">
+       💯
+      </div>
+      <div class="text-4xl font-black text-orange-500 mb-2">
+       100%
+      </div>
+      <p class="text-gray-600 font-semibold">Natural</p>
+     </div>
+     <div class="text-center">
+      <div class="text-5xl mb-3">
+       😊
+      </div>
+      <div class="text-4xl font-black text-orange-500 mb-2">
+       1M+
+      </div>
+      <p class="text-gray-600 font-semibold">Happy Fans</p>
+     </div>
+    </div>
+   </div>
+  </section><!-- Flavors Section -->
+  <section id="flavors" class="py-16 px-4 bg-gradient-to-b from-orange-50 to-white">
+   <div class="max-w-7xl mx-auto">
+    <h3 id="flavors-title" class="text-4xl md:text-5xl font-black text-center mb-12 text-gray-800">Explore Our Flavors</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+     <div class="flavor-card bg-white rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl">
+      <div class="text-7xl mb-4">
+       🍊
+      </div>
+      <h4 class="font-black text-xl text-orange-500">Orange</h4>
+      <p class="text-gray-600 mt-2">Classic &amp; Original</p>
+     </div>
+     <div class="flavor-card bg-white rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl">
+      <div class="text-7xl mb-4">
+       🍇
+      </div>
+      <h4 class="font-black text-xl text-purple-500">Grape</h4>
+      <p class="text-gray-600 mt-2">Sweet &amp; Bold</p>
+     </div>
+     <div class="flavor-card bg-white rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl">
+      <div class="text-7xl mb-4">
+       🍓
+      </div>
+      <h4 class="font-black text-xl text-red-500">Strawberry</h4>
+      <p class="text-gray-600 mt-2">Fresh &amp; Fruity</p>
+     </div>
+     <div class="flavor-card bg-white rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl">
+      <div class="text-7xl mb-4">
+       🍍
+      </div>
+      <h4 class="font-black text-xl text-yellow-500">Pineapple</h4>
+      <p class="text-gray-600 mt-2">Tropical Twist</p>
+     </div>
+    </div>
+   </div>
+  </section><!-- Featured Products Section -->
+  <section id="products" class="py-16 px-4 bg-white">
+   <div class="max-w-7xl mx-auto">
+    <h3 id="featured-title" class="text-4xl md:text-5xl font-black text-center mb-12 text-gray-800">Our Products</h3>
+    <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"><!-- Products will be rendered here -->
+    </div>
+   </div>
+  </section><!-- Testimonials Section -->
+  <section id="testimonials" class="py-16 px-4 bg-gradient-to-b from-white to-orange-50">
+   <div class="max-w-7xl mx-auto">
+    <h3 class="text-4xl md:text-5xl font-black text-center mb-12 text-gray-800">What People Say</h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+     <div class="bg-white rounded-3xl p-8 shadow-xl">
+      <div class="flex items-center mb-4">
+       <div class="text-4xl mr-4">
+        😍
+       </div>
+       <div>
+        <h4 class="font-bold text-lg">Emma Wilson</h4>
+        <div class="text-orange-500 text-xl">
+         ⭐⭐⭐⭐⭐
+        </div>
+       </div>
+      </div>
+      <p class="text-gray-600 text-lg">"Best orange drink ever! So refreshing on hot summer days!"</p>
+     </div>
+     <div class="bg-white rounded-3xl p-8 shadow-xl">
+      <div class="flex items-center mb-4">
+       <div class="text-4xl mr-4">
+        🤩
+       </div>
+       <div>
+        <h4 class="font-bold text-lg">James Park</h4>
+        <div class="text-orange-500 text-xl">
+         ⭐⭐⭐⭐⭐
+        </div>
+       </div>
+      </div>
+      <p class="text-gray-600 text-lg">"Love all the flavors! Can't pick a favorite - they're all amazing!"</p>
+     </div>
+     <div class="bg-white rounded-3xl p-8 shadow-xl">
+      <div class="flex items-center mb-4">
+       <div class="text-4xl mr-4">
+        🥳
+       </div>
+       <div>
+        <h4 class="font-bold text-lg">Sofia Garcia</h4>
+        <div class="text-orange-500 text-xl">
+         ⭐⭐⭐⭐⭐
+        </div>
+       </div>
+      </div>
+      <p class="text-gray-600 text-lg">"Perfect for parties! Everyone loves Fanta. Quality is top-notch!"</p>
+     </div>
+    </div>
+   </div>
+  </section><!-- Newsletter Section -->
+  <section class="py-20 px-4 fanta-gradient text-white relative overflow-hidden">
+   <div class="bubble" style="width: 70px; height: 70px; top: 20%; left: 15%; animation-delay: 0.5s;"></div>
+   <div class="bubble" style="width: 90px; height: 90px; top: 50%; left: 85%; animation-delay: 1.5s;"></div>
+   <div class="max-w-3xl mx-auto text-center relative z-10">
+    <div class="text-6xl mb-6">
+     📧
+    </div>
+    <h3 id="newsletter-title" class="text-4xl md:text-5xl font-black mb-4">Stay Fresh!</h3>
+    <p class="text-xl mb-8 opacity-95">Subscribe for exclusive offers and new flavor alerts</p>
+    <form id="newsletter-form" class="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto"><label for="newsletter-email" class="sr-only">Email Address</label> <input type="email" id="newsletter-email" placeholder="Enter your email" class="flex-1 px-6 py-4 rounded-full text-gray-800 font-semibold focus:outline-none focus:ring-4 focus:ring-white" required> <button type="submit" class="bg-white text-orange-500 px-10 py-4 rounded-full font-black hover:bg-orange-50 transition transform hover:scale-105 shadow-xl">Subscribe</button>
+    </form>
+   </div>
+  </section><!-- Contact Section -->
+  <section id="contact" class="py-16 px-4 bg-white">
+   <div class="max-w-4xl mx-auto">
+    <h3 class="text-4xl md:text-5xl font-black text-center mb-12 text-gray-800">Contact Us</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+     <div>
+      <h4 class="text-2xl font-black mb-6 text-orange-500">Get In Touch</h4>
+      <div class="space-y-6">
+       <div class="flex items-start"><span class="text-3xl mr-4">📍</span>
+        <div>
+         <p class="font-bold text-lg">Address</p>
+         <p class="text-gray-600">Fanta HQ,  Lucknow/p>
+        </div>
+       </div>
+       <div class="flex items-start"><span class="text-3xl mr-4">📧</span>
+        <div>
+         <p class="font-bold text-lg">Email</p>
+         <p class="text-gray-600"> nk8122006@gmail.com</p>
+        </div>
+       </div>
+       <div class="flex items-start"><span class="text-3xl mr-4">📞</span>
+        <div>
+         <p class="font-bold text-lg">Phone</p>
+         <p class="text-gray-600">+7081923724</p>
+        </div>
+       </div>
+      </div>
+     </div>
+     <div>
+      <form id="contact-form" class="space-y-4">
+       <div><label for="name" class="block text-sm font-bold mb-2">Name</label> <input type="text" id="name" class="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:outline-none focus:border-orange-500" required>
+       </div>
+       <div><label for="email" class="block text-sm font-bold mb-2">Email</label> <input type="email" id="email" class="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:outline-none focus:border-orange-500" required>
+       </div>
+       <div><label for="message" class="block text-sm font-bold mb-2">Message</label> <textarea id="message" rows="4" class="w-full px-4 py-3 rounded-xl border-2 border-gray-300 focus:outline-none focus:border-orange-500" required></textarea>
+       </div><button type="submit" class="w-full bg-orange-500 text-white py-4 rounded-xl font-black hover:bg-orange-600 transition transform hover:scale-105 shadow-lg">Send Message</button>
+      </form>
+     </div>
+    </div>
+   </div>
+  </section><!-- Cart Sidebar -->
+  <div id="cart-sidebar" class="cart-sidebar fixed top-0 right-0 w-full sm:w-96 h-full bg-white shadow-2xl z-50">
+   <div class="flex flex-col h-full">
+    <div class="flex justify-between items-center p-6 border-b bg-orange-50">
+     <h3 class="text-2xl font-black text-orange-500">Your Cart 🛒</h3><button id="close-cart" class="p-2 hover:bg-orange-100 rounded-full transition">
+      <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg></button>
+    </div>
+    <div id="cart-items" class="flex-1 overflow-y-auto p-6"><!-- Cart items will be rendered here -->
+    </div>
+    <div class="border-t p-6 bg-orange-50">
+     <div class="flex justify-between items-center mb-4"><span class="text-xl font-black text-gray-700">Total:</span> <span id="cart-total" class="text-3xl font-black text-orange-500">$0.00</span>
+     </div><button id="checkout-btn" class="w-full bg-orange-500 text-white py-4 rounded-xl font-black hover:bg-orange-600 transition transform hover:scale-105 shadow-lg">Checkout Now</button>
+    </div>
+   </div>
+  </div><!-- Toast Notification -->
+  <div id="toast" class="toast"></div><!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12 px-4">
+   <div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+     <div>
+      <div class="flex items-center mb-4">
+       <div class="text-4xl mr-2">
+        🍊
+       </div>
+       <h4 class="text-2xl font-black text-orange-500">Fanta</h4>
+      </div>
+      <p class="text-gray-400">Refreshing the world, one sip at a time.</p>
+     </div>
+     <div>
+      <h4 class="text-xl font-bold mb-4">Products</h4>
+      <ul class="space-y-2 text-gray-400">
+       <li><a href="#products" class="hover:text-orange-500 transition">All Drinks</a></li>
+       <li><a href="#flavors" class="hover:text-orange-500 transition">Flavors</a></li>
+       <li><a href="#" class="hover:text-orange-500 transition">New Releases</a></li>
+       <li><a href="#" class="hover:text-orange-500 transition">Limited Edition</a></li>
+      </ul>
+     </div>
+     <div>
+      <h4 class="text-xl font-bold mb-4">Company</h4>
+      <ul class="space-y-2 text-gray-400">
+       <li><a href="#" class="hover:text-orange-500 transition">About Us</a></li>
+       <li><a href="#" class="hover:text-orange-500 transition">Careers</a></li>
+       <li><a href="#contact" class="hover:text-orange-500 transition">Contact</a></li>
+       <li><a href="#" class="hover:text-orange-500 transition">Press</a></li>
+      </ul>
+     </div>
+     <div>
+      <h4 class="text-xl font-bold mb-4">Follow Us</h4>
+      <div class="flex space-x-4"><a href="#" class="text-3xl hover:scale-110 transition transform">📘</a> <a href="#" class="text-3xl hover:scale-110 transition transform">📸</a> <a href="#" class="text-3xl hover:scale-110 transition transform">🐦</a> <a href="#" class="text-3xl hover:scale-110 transition transform">📺</a>
+      </div>
+     </div>
+    </div>
+    <div class="border-t border-gray-800 pt-8 text-center">
+     <p id="footer-text" class="text-gray-400">© 2024 Fanta. All rights reserved. Taste The Feeling!</p>
+    </div>
+   </div>
+  </footer>
+  <script>
+    const defaultConfig = {
+      store_name: "Fanta",
+      hero_title: "Taste The Feeling!",
+      hero_subtitle: "100% Natural Orange Flavor - Pure Refreshment",
+      cta_button: "Order Now",
+      flavors_title: "Explore Our Flavors",
+      featured_title: "Our Products",
+      newsletter_title: "Stay Fresh!",
+      footer_text: "© 2024 Fanta. All rights reserved. Taste The Feeling!",
+      primary_color: "#FF6B00",
+      secondary_color: "#FFB800",
+      text_color: "#1f2937",
+      button_color: "#FF6B00",
+      accent_color: "#10b981",
+      font_family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
+      font_size: 16
+    };
+
+    const products = [
+      { id: 1, name: "Fanta Orange 500ml", price: 2.99, flavor: "Orange", emoji: "🍊" },
+      { id: 2, name: "Fanta Grape 500ml", price: 2.99, flavor: "Grape", emoji: "🍇" },
+      { id: 3, name: "Fanta Strawberry 500ml", price: 2.99, flavor: "Strawberry", emoji: "🍓" },
+      { id: 4, name: "Fanta Pineapple 500ml", price: 2.99, flavor: "Pineapple", emoji: "🍍" },
+      { id: 5, name: "Fanta Orange 1.5L", price: 4.99, flavor: "Orange", emoji: "🍊" },
+      { id: 6, name: "Fanta Grape 1.5L", price: 4.99, flavor: "Grape", emoji: "🍇" },
+      { id: 7, name: "Fanta Mixed Pack", price: 12.99, flavor: "Mixed", emoji: "🎁" },
+      { id: 8, name: "Fanta Party Pack", price: 19.99, flavor: "Mixed", emoji: "🎉" }
+    ];
+
+    let cart = [];
+
+    function renderProducts() {
+      const grid = document.getElementById('products-grid');
+      const baseSize = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.font_size) || defaultConfig.font_size;
+      const customFont = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.font_family) || defaultConfig.font_family;
+      const buttonColor = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.button_color) || defaultConfig.button_color;
+      const textColor = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.text_color) || defaultConfig.text_color;
+      
+      grid.innerHTML = products.map(product => `
+        <div class="product-card bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div class="h-48 bg-gradient-to-br from-orange-400 to-yellow-400 flex items-center justify-center">
+            <span class="text-7xl">${product.emoji}</span>
+          </div>
+          <div class="p-6">
+            <div class="text-sm font-bold mb-2" style="color: ${buttonColor}; font-size: ${baseSize * 0.875}px;">${product.flavor}</div>
+            <h4 class="font-black mb-3" style="color: ${textColor}; font-family: ${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: ${baseSize * 1.125}px;">${product.name}</h4>
+            <p class="text-3xl font-black mb-4" style="color: ${buttonColor}; font-size: ${baseSize * 1.75}px;">$${product.price.toFixed(2)}</p>
+            <button onclick="addToCart(${product.id})" class="w-full py-3 text-white rounded-xl font-black hover:shadow-lg transition transform hover:scale-105" style="background-color: ${buttonColor}; font-size: ${baseSize}px;">
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      const existingItem = cart.find(item => item.id === productId);
+      
+      if (existingItem) {
+        existingItem.quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+      
+      updateCart();
+      showToast(`${product.name} added to cart! 🎉`);
+    }
+
+    function removeFromCart(productId) {
+      cart = cart.filter(item => item.id !== productId);
+      updateCart();
+    }
+
+    function updateQuantity(productId, change) {
+      const item = cart.find(item => item.id === productId);
+      if (item) {
+        item.quantity += change;
+        if (item.quantity <= 0) {
+          removeFromCart(productId);
+        } else {
+          updateCart();
+        }
+      }
+    }
+
+    function updateCart() {
+      const cartCount = document.getElementById('cart-count');
+      const cartItems = document.getElementById('cart-items');
+      const cartTotal = document.getElementById('cart-total');
+      const baseSize = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.font_size) || defaultConfig.font_size;
+      const customFont = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.font_family) || defaultConfig.font_family;
+      const textColor = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.text_color) || defaultConfig.text_color;
+      const buttonColor = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.button_color) || defaultConfig.button_color;
+      
+      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      
+      cartCount.textContent = totalItems;
+      cartTotal.textContent = `$${totalPrice.toFixed(2)}`;
+      
+      if (cart.length === 0) {
+        cartItems.innerHTML = `<div class="text-center text-gray-500 py-12" style="font-size: ${baseSize * 1.125}px;"><div class="text-6xl mb-4">🛒</div><p class="font-semibold">Your cart is empty</p></div>`;
+      } else {
+        cartItems.innerHTML = cart.map(item => `
+          <div class="flex items-center justify-between mb-4 pb-4 border-b bg-orange-50 rounded-xl p-4">
+            <div class="flex items-center flex-1">
+              <div class="text-3xl mr-3">${item.emoji}</div>
+              <div class="flex-1">
+                <h5 class="font-black mb-1" style="color: ${textColor}; font-family: ${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: ${baseSize}px;">${item.name}</h5>
+                <p class="font-black" style="color: ${buttonColor}; font-size: ${baseSize * 0.875}px;">$${item.price.toFixed(2)}</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button onclick="updateQuantity(${item.id}, -1)" class="w-8 h-8 rounded-full bg-orange-200 hover:bg-orange-300 transition flex items-center justify-center font-black" style="font-size: ${baseSize * 1.25}px;">−</button>
+              <span class="font-black" style="color: ${textColor}; font-size: ${baseSize * 1.125}px;">${item.quantity}</span>
+              <button onclick="updateQuantity(${item.id}, 1)" class="w-8 h-8 rounded-full bg-orange-200 hover:bg-orange-300 transition flex items-center justify-center font-black" style="font-size: ${baseSize * 1.25}px;">+</button>
+              <button onclick="removeFromCart(${item.id})" class="ml-2 text-red-500 hover:text-red-700 transition">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      const accentColor = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.accent_color) || defaultConfig.accent_color;
+      const baseSize = (window.elementSdk && window.elementSdk.config && window.elementSdk.config.font_size) || defaultConfig.font_size;
+      
+      toast.textContent = message;
+      toast.style.backgroundColor = accentColor;
+      toast.style.fontSize = `${baseSize}px`;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Event Listeners
+    document.getElementById('cart-btn').addEventListener('click', () => {
+      document.getElementById('cart-sidebar').classList.add('active');
+    });
+
+    document.getElementById('close-cart').addEventListener('click', () => {
+      document.getElementById('cart-sidebar').classList.remove('active');
+    });
+
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.add('active');
+    });
+
+    document.getElementById('close-mobile-menu').addEventListener('click', () => {
+      document.getElementById('mobile-menu').classList.remove('active');
+    });
+
+    document.querySelectorAll('.mobile-link').forEach(link => {
+      link.addEventListener('click', () => {
+        document.getElementById('mobile-menu').classList.remove('active');
+      });
+    });
+
+    document.getElementById('checkout-btn').addEventListener('click', () => {
+      if (cart.length === 0) {
+        showToast('Your cart is empty! 🛒');
+      } else {
+        showToast('Checkout coming soon! 🎉');
+      }
+    });
+
+    document.getElementById('cta-button').addEventListener('click', () => {
+      document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Newsletter Form
+    document.getElementById('newsletter-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      showToast('Thank you for subscribing! 🎉');
+      document.getElementById('newsletter-form').reset();
+    });
+
+    // Contact Form
+    document.getElementById('contact-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      showToast('Message sent successfully! 📧');
+      document.getElementById('contact-form').reset();
+    });
+
+    async function onConfigChange(config) {
+      const storeNameEl = document.getElementById('store-name');
+      const heroTitleEl = document.getElementById('hero-title');
+      const heroSubtitleEl = document.getElementById('hero-subtitle');
+      const ctaButtonEl = document.getElementById('cta-button');
+      const flavorsTitleEl = document.getElementById('flavors-title');
+      const featuredTitleEl = document.getElementById('featured-title');
+      const newsletterTitleEl = document.getElementById('newsletter-title');
+      const footerTextEl = document.getElementById('footer-text');
+
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const primaryColor = config.primary_color || defaultConfig.primary_color;
+      const textColor = config.text_color || defaultConfig.text_color;
+
+      storeNameEl.textContent = config.store_name || defaultConfig.store_name;
+      storeNameEl.style.color = primaryColor;
+      storeNameEl.style.fontFamily = `${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      storeNameEl.style.fontSize = `${baseSize * 1.875}px`;
+
+      heroTitleEl.textContent = config.hero_title || defaultConfig.hero_title;
+      heroTitleEl.style.fontFamily = `${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      heroTitleEl.style.fontSize = `${baseSize * 3.125}px`;
+
+      heroSubtitleEl.textContent = config.hero_subtitle || defaultConfig.hero_subtitle;
+      heroSubtitleEl.style.fontFamily = `${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      heroSubtitleEl.style.fontSize = `${baseSize * 1.25}px`;
+
+      ctaButtonEl.textContent = config.cta_button || defaultConfig.cta_button;
+      ctaButtonEl.style.fontFamily = `${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      ctaButtonEl.style.fontSize = `${baseSize * 1.25}px`;
+
+      flavorsTitleEl.textContent = config.flavors_title || defaultConfig.flavors_title;
+      flavorsTitleEl.style.color = textColor;
+      flavorsTitleEl.style.fontFamily = `${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      flavorsTitleEl.style.fontSize = `${baseSize * 2.5}px`;
+
+      featuredTitleEl.textContent = config.featured_title || defaultConfig.featured_title;
+      featuredTitleEl.style.color = textColor;
+      featuredTitleEl.style.fontFamily = `${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      featuredTitleEl.style.fontSize = `${baseSize * 2.5}px`;
+
+      newsletterTitleEl.textContent = config.newsletter_title || defaultConfig.newsletter_title;
+      newsletterTitleEl.style.fontFamily = `${customFont}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+      newsletterTitleEl.style.fontSize = `${baseSize * 2.5}px`;
+
+      footerTextEl.textContent = config.footer_text || defaultConfig.footer_text;
+      footerTextEl.style.fontSize = `${baseSize * 0.875}px`;
+
+      renderProducts();
+      updateCart();
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                config.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_color || defaultConfig.secondary_color,
+              set: (value) => {
+                config.secondary_color = value;
+                window.elementSdk.setConfig({ secondary_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.button_color || defaultConfig.button_color,
+              set: (value) => {
+                config.button_color = value;
+                window.elementSdk.setConfig({ button_color: value });
+              }
+            },
+            {
+              get: () => config.accent_color || defaultConfig.accent_color,
+              set: (value) => {
+                config.accent_color = value;
+                window.elementSdk.setConfig({ accent_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["store_name", config.store_name || defaultConfig.store_name],
+          ["hero_title", config.hero_title || defaultConfig.hero_title],
+          ["hero_subtitle", config.hero_subtitle || defaultConfig.hero_subtitle],
+          ["cta_button", config.cta_button || defaultConfig.cta_button],
+          ["flavors_title", config.flavors_title || defaultConfig.flavors_title],
+          ["featured_title", config.featured_title || defaultConfig.featured_title],
+          ["newsletter_title", config.newsletter_title || defaultConfig.newsletter_title],
+          ["footer_text", config.footer_text || defaultConfig.footer_text]
+        ])
+      });
+    }
+
+    // Initial render
+    renderProducts();
+    updateCart();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99c6adf8b32a3a3f',t:'MTc2Mjc4OTU1NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
